@@ -91,6 +91,13 @@ func (i *Instance) IncomingProxyWorker() {
 			new := CreateProxy(ip, port, LowProxyType, prot)
 			i.Database.Save(new)
 
+			var by User
+			if err := i.Database.One("ID", req.By, &by); err == nil {
+				by.Submitted++
+				by.Points += 250
+				i.Database.Update(&by)
+			}
+
 			i.Log.WithFields(logrus.Fields{
 				"IP":       ip,
 				"Port":     port,
@@ -173,6 +180,13 @@ func (i *Instance) IncomingResultWorker() {
 				"Proxy":  proxy.Identifier,
 				"Result": chk.Alive,
 			}).Info("Proxy check result recieved")
+		}
+
+		var by User
+		if err := i.Database.One("ID", uid, &by); err == nil {
+			by.Checked++
+			by.Points += 10
+			i.Database.Update(&by)
 		}
 
 		i.Database.Update(&proxy)
