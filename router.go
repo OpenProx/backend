@@ -1,7 +1,6 @@
 package backend
 
 import (
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -129,8 +128,6 @@ func (i *Instance) GetCheckRequestRoute(c echo.Context) error {
 	if err != nil {
 		return c.NoContent(http.StatusNotFound)
 	}
-
-	fmt.Println(req.Token)
 
 	return c.JSON(http.StatusOK, req)
 }
