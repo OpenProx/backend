@@ -166,6 +166,17 @@ func (i *Instance) IncomingResultWorker() {
 				proxy.DeadSince++
 			}
 
+			for j := 0; j < len(proxy.Checks); j++ {
+				if proxy.Checks[j].Alive == proxy.Alive {
+					var by User
+					if err := i.Database.One("ID", proxy.Checks[j].DoneBy, &by); err == nil {
+						by.Checked++
+						by.Points += 10
+						i.Database.Update(&by)
+					}
+				}
+			}
+
 			// Next Check
 			proxy.LastCheck = time.Now().Unix()
 			proxy.CheckID++
@@ -180,13 +191,6 @@ func (i *Instance) IncomingResultWorker() {
 				"Proxy":  proxy.Identifier,
 				"Result": chk.Alive,
 			}).Info("Proxy check result recieved")
-		}
-
-		var by User
-		if err := i.Database.One("ID", uid, &by); err == nil {
-			by.Checked++
-			by.Points += 10
-			i.Database.Update(&by)
 		}
 
 		i.Database.Update(&proxy)
