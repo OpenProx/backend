@@ -20,8 +20,10 @@ func (i *Instance) InitRouter() {
 
 	i.Router.GET("user", i.GetUserRoute)
 	i.Router.GET("new", i.GetNewIdentityRoute)
+	i.Router.GET("check", i.GetCheckRequestRoute)
 
 	i.Router.POST("submit", i.PostProxies)
+	i.Router.POST("check", i.PostCheckResultRoute)
 }
 
 // GetUserRoute returns user infos
@@ -97,5 +99,41 @@ func (i *Instance) PostProxies(c echo.Context) error {
 		"Proxies": len(d.Proxies),
 	}).Info("Proxies added to queue")
 	i.IncomingProxy <- AddRequest{Proxies: d.Proxies, By: u.ID}
+	return c.NoContent(http.StatusOK)
+}
+
+// GetCheckRequestRoute returns a check request
+func (i *Instance) GetCheckRequestRoute(c echo.Context) error {
+	u := c.Get("User").(*User)
+	if u == nil {
+		return c.NoContent(http.StatusUnauthorized)
+	}
+
+	req, err := i.GetCheckableProxy(u.ID)
+	if err != nil {
+		return c.NoContent(http.StatusBadRequest)
+	}
+	if req == nil {
+		return c.NoContent(http.StatusNotFound)
+	}
+
+	return c.JSON(http.StatusOK, req)
+}
+
+// PostCheckResultRoute posts the user check result
+func (i *Instance) PostCheckResultRoute(c echo.Context) error {
+	u := c.Get("User").(*User)
+	if u == nil {
+		return c.NoContent(http.StatusUnauthorized)
+	}
+
+	chk := CheckResult{}
+	c.Bind(&chk)
+
+	if len(chk.Token) == 0 {
+		return c.NoContent(http.StatusBadRequest)
+	}
+
+	i.IncomingResult <- chk
 	return c.NoContent(http.StatusOK)
 }

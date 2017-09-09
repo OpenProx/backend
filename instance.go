@@ -21,6 +21,7 @@ func (i *Instance) InitAndRun(addr string) error {
 	i.Log = logrus.New()
 
 	i.IncomingProxy = make(chan AddRequest, 100)
+	i.IncomingResult = make(chan CheckResult, 1000)
 
 	for j := 0; j < 10; j++ {
 		go i.IncomingProxyWorker()
@@ -95,6 +96,82 @@ func (i *Instance) IncomingProxyWorker() {
 				"Protocol": prot,
 				"ID":       new.ID,
 			}).Info("Proxy working and added!")
+		}
+	}
+}
+
+// IncomingResultWorker checks incoming results
+func (i *Instance) IncomingResultWorker() {
+	for chk := range i.IncomingResult {
+		pid, uid, chkid, key, err := DecodeRequestToken(chk.Token)
+		if err != nil {
+			i.Log.WithError(err).Warn("Error while decoding result token...")
+			continue
+		}
+
+		// Get Proxy from db
+		var proxy Proxy
+		if err := i.Database.One("ID", pid, &proxy); err != nil {
+			i.Log.WithFields(logrus.Fields{
+				"ProxyID": pid,
+			}).WithError(err).Warn("Proxy not in database...")
+			continue
+		}
+
+		// Check if CheckID matches
+		if proxy.CheckID != chkid {
+			i.Log.WithFields(logrus.Fields{
+				"Got":     chkid,
+				"Current": proxy.CheckID,
+			}).WithError(err).Warn("Proxy check too late...")
+			continue
+		}
+
+		// Check if key is already used
+		if proxy.HasKey(key) {
+			i.Log.WithFields(logrus.Fields{
+				"Key": key,
+			}).WithError(err).Warn("Proxy check key duplication...")
+			continue
+		}
+
+		// Finalize
+		proxy.Checks = append(proxy.Checks, Check{chk.Ms, chk.Alive, uid, key})
+		proxy.ChecksLength++
+
+		if proxy.ChecksLength >= 5 {
+			// Count Alive
+			a := 0
+			for i := 0; i < len(proxy.Checks); i++ {
+				if proxy.Checks[i].Alive {
+					a++
+				}
+			}
+
+			// Alive
+			if a >= 3 {
+				proxy.Alive = true
+				proxy.DeadSince = 0
+				// Reward
+			} else {
+				proxy.Alive = false
+				proxy.DeadSince++
+			}
+
+			// Next Check
+			proxy.LastCheck = time.Now().Unix()
+			proxy.CheckID++
+			proxy.Checks = make([]Check, 0)
+
+			i.Log.WithFields(logrus.Fields{
+				"Proxy":  proxy.Identifier,
+				"Result": proxy.Alive,
+			}).Info("Proxy check finished!")
+		} else {
+			i.Log.WithFields(logrus.Fields{
+				"Proxy":  proxy.Identifier,
+				"Result": chk.Alive,
+			}).Info("Proxy check result recieved")
 		}
 	}
 }
