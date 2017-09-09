@@ -40,6 +40,7 @@ type Proxy struct {
 	Port         int
 	DeadSince    int
 	Alive        bool
+	CheckID      int
 	Type         ProxyType     `storm:"index"`
 	Protocol     ProxyProtocol `storm:"index"`
 	Joined       int64
@@ -69,10 +70,11 @@ type User struct {
 
 // Instance represents a server instance
 type Instance struct {
-	Database      *storm.DB
-	Log           *logrus.Logger
-	Router        *echo.Echo
-	IncomingProxy chan AddRequest
+	Database       *storm.DB
+	Log            *logrus.Logger
+	Router         *echo.Echo
+	IncomingProxy  chan AddRequest
+	IncomingResult chan CheckResult
 }
 
 // AddRequest represents a request to add a proxie to the database
@@ -83,15 +85,15 @@ type AddRequest struct {
 
 // CheckRequest represents a request for the client
 type CheckRequest struct {
-	Token    string
-	IP       string
-	Port     int
-	Protocol ProxyProtocol
+	Token    string        `json:"token"`
+	IP       string        `json:"ip"`
+	Port     int           `json:"port"`
+	Protocol ProxyProtocol `json:"protocol"`
 }
 
 // CheckResult represents a result from the client
 type CheckResult struct {
-	Token string
-	Alive bool
-	Ms    int64
+	Token string `json:"token"`
+	Alive bool   `json:"alive"`
+	Ms    int    `json:"ms"`
 }
