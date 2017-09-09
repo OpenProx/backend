@@ -29,6 +29,11 @@ func (i *Instance) InitRouter() {
 
 // GetUserRoute returns user infos
 func (i *Instance) GetUserRoute(c echo.Context) error {
+	nilCheck := c.Get("User")
+	if nilCheck == nil {
+		return c.NoContent(http.StatusUnauthorized)
+	}
+
 	u := c.Get("User")
 	if u == nil {
 		return c.NoContent(http.StatusUnauthorized)
@@ -77,6 +82,11 @@ func (i *Instance) GetNewIdentityRoute(c echo.Context) error {
 
 // PostProxies submits new proxies
 func (i *Instance) PostProxies(c echo.Context) error {
+	nilCheck := c.Get("User")
+	if nilCheck == nil {
+		return c.NoContent(http.StatusUnauthorized)
+	}
+
 	u := c.Get("User").(*User)
 	if u == nil {
 		return c.NoContent(http.StatusUnauthorized)
@@ -105,6 +115,11 @@ func (i *Instance) PostProxies(c echo.Context) error {
 
 // GetCheckRequestRoute returns a check request
 func (i *Instance) GetCheckRequestRoute(c echo.Context) error {
+	nilCheck := c.Get("User")
+	if nilCheck == nil {
+		return c.NoContent(http.StatusUnauthorized)
+	}
+
 	u := c.Get("User").(*User)
 	if u == nil {
 		return c.NoContent(http.StatusUnauthorized)
@@ -112,9 +127,6 @@ func (i *Instance) GetCheckRequestRoute(c echo.Context) error {
 
 	req, err := i.GetCheckableProxy(u.ID)
 	if err != nil {
-		return c.NoContent(http.StatusBadRequest)
-	}
-	if req == nil {
 		return c.NoContent(http.StatusNotFound)
 	}
 
