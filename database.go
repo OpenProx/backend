@@ -52,7 +52,3 @@ func (i *Instance) GetCheckableProxy(uid int) (*CheckRequest, error) {
 		Protocol: selected.Protocol,
 	}, nil
 }
-
-func (i *Instance) AddChecks() {
-
-}

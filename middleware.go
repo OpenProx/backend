@@ -2,7 +2,6 @@ package backend
 
 import (
 	"fmt"
-	"net/http"
 	"os"
 
 	jwt "github.com/dgrijalva/jwt-go"
@@ -31,17 +30,6 @@ func (i *Instance) ParseJWT(next echo.HandlerFunc) echo.HandlerFunc {
 			}
 		}
 
-		return next(c)
-	}
-}
-
-// NeedAuth checks if user is logged in
-func NeedAuth(next echo.HandlerFunc) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		u := c.Get("User")
-		if u == nil {
-			return c.NoContent(http.StatusUnauthorized)
-		}
 		return next(c)
 	}
 }

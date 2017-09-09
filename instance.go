@@ -26,6 +26,7 @@ func (i *Instance) InitAndRun(addr string) error {
 	for j := 0; j < 10; j++ {
 		go i.IncomingProxyWorker()
 	}
+	go i.IncomingResultWorker()
 
 	i.InitRouter()
 
@@ -123,7 +124,7 @@ func (i *Instance) IncomingResultWorker() {
 			i.Log.WithFields(logrus.Fields{
 				"Got":     chkid,
 				"Current": proxy.CheckID,
-			}).WithError(err).Warn("Proxy check too late...")
+			}).Warn("Proxy check too late...")
 			continue
 		}
 
@@ -131,7 +132,7 @@ func (i *Instance) IncomingResultWorker() {
 		if proxy.HasKey(key) {
 			i.Log.WithFields(logrus.Fields{
 				"Key": key,
-			}).WithError(err).Warn("Proxy check key duplication...")
+			}).Warn("Proxy check key duplication...")
 			continue
 		}
 
@@ -173,5 +174,7 @@ func (i *Instance) IncomingResultWorker() {
 				"Result": chk.Alive,
 			}).Info("Proxy check result recieved")
 		}
+
+		i.Database.Update(&proxy)
 	}
 }
