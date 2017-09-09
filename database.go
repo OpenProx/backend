@@ -39,6 +39,17 @@ func (i *Instance) GetCheckableProxy(uid int) (*CheckRequest, error) {
 		return nil, fmt.Errorf("No checkable proxy found")
 	}
 
+	ok := true
+	for i := 0; i < len(found); i++ {
+		if !found[i].HasUserCheck(uid) {
+			ok = false
+			break
+		}
+	}
+	if !ok {
+		return nil, fmt.Errorf("No checkable proxy found")
+	}
+
 	selected := found[rand.Intn(len(found))]
 	token, err := GenerateRequestToken(selected.ID, uid, selected.CheckID)
 	if err != nil {

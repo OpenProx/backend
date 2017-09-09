@@ -23,10 +23,10 @@ func (p *Proxy) GenerateIdentifier() {
 	p.Identifier = fmt.Sprintf("%s:%d", p.IP, p.Port)
 }
 
-// HasKey checks if a check key is already present
-func (p *Proxy) HasKey(key string) bool {
+// HasUserCheck checks if a check is already present
+func (p *Proxy) HasUserCheck(uid int) bool {
 	for i := 0; i < len(p.Checks); i++ {
-		if p.Checks[i].Key == key {
+		if p.Checks[i].DoneBy == uid {
 			return true
 		}
 	}

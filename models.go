@@ -55,7 +55,6 @@ type Check struct {
 	ResponseTime int
 	Alive        bool
 	DoneBy       int
-	Key          string
 }
 
 // User represents a user

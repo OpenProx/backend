@@ -104,7 +104,7 @@ func (i *Instance) IncomingProxyWorker() {
 // IncomingResultWorker checks incoming results
 func (i *Instance) IncomingResultWorker() {
 	for chk := range i.IncomingResult {
-		pid, uid, chkid, key, err := DecodeRequestToken(chk.Token)
+		pid, uid, chkid, err := DecodeRequestToken(chk.Token)
 		if err != nil {
 			i.Log.WithError(err).Warn("Error while decoding result token...")
 			continue
@@ -129,15 +129,15 @@ func (i *Instance) IncomingResultWorker() {
 		}
 
 		// Check if key is already used
-		if proxy.HasKey(key) {
+		if proxy.HasUserCheck(uid) {
 			i.Log.WithFields(logrus.Fields{
-				"Key": key,
-			}).Warn("Proxy check key duplication...")
+				"ID": uid,
+			}).Warn("Proxy check duplication...")
 			continue
 		}
 
 		// Finalize
-		proxy.Checks = append(proxy.Checks, Check{chk.Ms, chk.Alive, uid, key})
+		proxy.Checks = append(proxy.Checks, Check{chk.Ms, chk.Alive, uid})
 		proxy.ChecksLength++
 
 		if proxy.ChecksLength >= 5 {
